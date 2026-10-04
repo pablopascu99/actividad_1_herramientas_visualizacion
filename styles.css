@@ -1,0 +1,220 @@
+body {
+    max-width: 1120px;
+    margin: 32px auto;
+    padding: 0 20px;
+    color: #25332f;
+    background: #f5f7f3;
+    font: 16px/1.5 Arial, sans-serif;
+}
+
+h1 {
+    margin-bottom: 4px;
+}
+
+h2 {
+    margin: 0;
+    font-size: 22px;
+}
+
+h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.subtitle {
+    margin-top: 0;
+    color: #596762;
+}
+
+.filters,
+.section-heading,
+.legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.filters {
+    margin: 24px 0 12px;
+}
+
+.section-heading {
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+select,
+input {
+    margin-left: 6px;
+    padding: 6px;
+    font: inherit;
+}
+
+.chart-section {
+    margin-top: 30px;
+    padding-top: 22px;
+    border-top: 1px solid #cbd4ce;
+}
+
+.chart {
+    padding: 8px;
+    background: white;
+    border: 1px solid #dce3dd;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 18px;
+}
+
+.chart-grid>div {
+    min-width: 0;
+}
+
+.chart-note,
+.finding,
+#status {
+    color: #596762;
+}
+
+.finding {
+    margin-top: 12px;
+}
+
+.legend {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #596762;
+}
+
+.legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #087f68;
+}
+
+.legend .medium {
+    background: #d19a32;
+}
+
+.legend .old {
+    background: #c35942;
+}
+
+.legend .threshold {
+    width: 18px;
+    height: 2px;
+    border-radius: 0;
+    background: #25332f;
+}
+
+svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.axis text {
+    fill: #596762;
+    font-size: 12px;
+}
+
+.axis-label {
+    fill: #596762;
+    font-size: 12px;
+}
+
+.axis path,
+.axis line {
+    stroke: #cbd4ce;
+}
+
+.grid line {
+    stroke: #e6ebe7;
+}
+
+.grid path {
+    display: none;
+}
+
+.line {
+    fill: none;
+    stroke: #087f68;
+    stroke-width: 3;
+}
+
+.point {
+    fill: #d35e43;
+    stroke: white;
+    stroke-width: 2;
+}
+
+.bar {
+    fill: #087f68;
+}
+
+.bar:hover {
+    fill: #d35e43;
+}
+
+.tile-label {
+    fill: white;
+    font-size: 12px;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+.customer-point {
+    stroke: white;
+    stroke-width: .7;
+    opacity: .72;
+}
+
+.p90-line {
+    stroke: #25332f;
+    stroke-dasharray: 5 4;
+    stroke-width: 1.5;
+}
+
+.p90-label {
+    fill: #25332f;
+    font-size: 12px;
+}
+
+@media (max-width: 600px) {
+    body {
+        margin: 22px auto;
+        padding: 0 12px;
+    }
+
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .chart {
+        padding: 4px;
+        overflow-x: auto;
+    }
+
+    .chart svg {
+        min-width: 640px;
+    }
+
+    .axis text {
+        font-size: 14px;
+    }
+}

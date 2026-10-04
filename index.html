@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ventas, productos y clientes</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="dashboard.js" defer></script>
+</head>
+<body>
+  <h1>Ventas, productos y clientes</h1>
+  <p class="subtitle">Online Retail II · Diciembre de 2010 a noviembre de 2011</p>
+
+  <div class="filters">
+    <label for="from-month">Desde
+      <input id="from-month" type="month" min="2010-12" max="2011-11" value="2010-12">
+    </label>
+    <label for="to-month">Hasta
+      <input id="to-month" type="month" min="2010-12" max="2011-11" value="2011-11">
+    </label>
+  </div>
+
+  <p id="status">Cargando transacciones…</p>
+
+  <section class="chart-section">
+    <div class="section-heading">
+      <h2>1. Evolución de las ventas</h2>
+      <label for="sales-metric">Mostrar
+        <select id="sales-metric">
+          <option value="revenue">Facturación (GBP)</option>
+          <option value="units">Unidades vendidas</option>
+        </select>
+      </label>
+    </div>
+    <div id="sales-chart" class="chart"></div>
+    <p id="sales-findings" class="finding"></p>
+  </section>
+
+  <section class="chart-section">
+    <div class="section-heading">
+      <h2>2. Productos con más ventas</h2>
+      <label for="product-metric">Ordenar por
+        <select id="product-metric">
+          <option value="revenue">Facturación (GBP)</option>
+          <option value="units">Unidades vendidas</option>
+        </select>
+      </label>
+    </div>
+    <div class="chart-grid">
+      <div>
+        <h3>Top 10</h3>
+        <div id="products-chart" class="chart"></div>
+      </div>
+      <div>
+        <h3>Treemap</h3>
+        <div id="treemap-chart" class="chart"></div>
+        <p class="chart-note">El tamaño de cada bloque representa la métrica elegida. Pasa el cursor para ver el producto.</p>
+      </div>
+    </div>
+    <p id="product-findings" class="finding"></p>
+  </section>
+
+  <section class="chart-section">
+    <div class="section-heading">
+      <h2>3. Frecuencia y gasto por cliente</h2>
+      <p class="chart-note">Cada punto es un cliente identificado. Horizontal: pedidos; vertical: gasto bruto. Color: días desde su última compra.</p>
+    </div>
+    <div class="legend">
+      <span><i class="recent"></i>0–30 días</span>
+      <span><i class="medium"></i>31–90 días</span>
+      <span><i class="old"></i>Más de 90 días</span>
+      <span><i class="threshold"></i>Umbral de gasto P90</span>
+    </div>
+    <div id="clients-chart" class="chart"></div>
+    <p id="client-findings" class="finding"></p>
+  </section>
+
+</body>
+</html>
