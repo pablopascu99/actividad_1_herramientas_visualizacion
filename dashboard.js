@@ -5,7 +5,7 @@
  *   - Nombre Apellido1 Apellido2
  *   - Nombre Apellido1 Apellido2
  *   - Nombre Apellido1 Apellido2
- *   - Nombre Apellido1 Apellido2
+ *   - Miguel España Sanchez
  *
  * Dataset: Online Retail II (hoja 2010-2011), ya tratado con preparar_datos.py
  *          -> datos/transacciones_limpias.csv
