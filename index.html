@@ -21,6 +21,9 @@
     </label>
   </div>
 
+  <!-- Avisos de la selección cruzada activa (los rellena dashboard.js) -->
+  <div id="selection" class="selection" aria-live="polite"></div>
+
   <p id="status">Cargando transacciones…</p>
 
   <section class="chart-section">
@@ -55,7 +58,7 @@
       <div>
         <h3>Treemap</h3>
         <div id="treemap-chart" class="chart"></div>
-        <p class="chart-note">El tamaño de cada bloque representa la métrica elegida. Pasa el cursor para ver el producto.</p>
+        <p class="chart-note">El tamaño de cada bloque representa la métrica elegida; el color coincide con el de su barra. Clic en un producto para filtrar la línea y resaltar a sus compradores.</p>
       </div>
     </div>
     <p id="product-findings" class="finding"></p>
@@ -75,6 +78,8 @@
     <div id="clients-chart" class="chart"></div>
     <p id="client-findings" class="finding"></p>
   </section>
+  <!-- Tooltip único compartido por todas las gráficas -->
+  <div id="tooltip" class="tooltip" role="tooltip"></div>
 
 </body>
 </html>
