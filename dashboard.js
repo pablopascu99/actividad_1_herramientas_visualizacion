@@ -4,7 +4,7 @@
  * Equipo (COMPLETAR con nombre y apellidos de todos los miembros):
  *   - Nombre Apellido1 Apellido2
  *   - Nombre Apellido1 Apellido2
- *   - Nombre Apellido1 Apellido2
+ *   - Aitor Hernández Moreno
  *   - Miguel España Sanchez
  *
  * Dataset: Online Retail II (hoja 2010-2011), ya tratado con preparar_datos.py
