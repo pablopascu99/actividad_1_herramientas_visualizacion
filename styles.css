@@ -159,10 +159,63 @@ svg {
 }
 
 
-.tile-label {
-    fill: white;
-    font-size: 12px;
-    font-weight: bold;
+/* ---------- Curva de concentración de productos ---------- */
+
+/*
+ * Área suave bajo la curva acumulada.
+ */
+.concentration-area {
+    fill: #087f68;
+    opacity: .12;
+    pointer-events: none;
+}
+
+/*
+ * Línea principal de concentración.
+ */
+.concentration-line {
+    fill: none;
+    stroke: #087f68;
+    stroke-width: 3;
+    pointer-events: none;
+}
+
+/*
+ * Cada punto representa un producto.
+ */
+.concentration-point {
+    cursor: pointer;
+    stroke: white;
+    stroke-width: 2;
+    transition:
+        opacity .25s,
+        stroke-width .15s;
+}
+
+/*
+ * Los productos no seleccionados se atenúan.
+ */
+.concentration-point.dimmed {
+    opacity: .25;
+}
+
+/*
+ * Resaltado al pasar el ratón o seleccionar el producto.
+ */
+.concentration-point.hovered,
+.concentration-point.selected {
+    stroke: #25332f;
+    stroke-width: 3;
+    opacity: 1;
+}
+
+/*
+ * Etiqueta final: porcentaje acumulado por el Top 10.
+ */
+.concentration-label {
+    fill: #25332f;
+    font-size: 13px;
+    font-weight: 700;
     pointer-events: none;
 }
 
@@ -253,33 +306,25 @@ svg {
 
 .point,
 .bar,
-.tile {
+.concentration-point {
     cursor: pointer;
 }
 
-.line.filtered {
-    stroke: #d35e43;               /* la línea cambia de color si muestra un solo producto */
-}
-
-.point.selected {
-    fill: #25332f;
-}
-
 .bar,
-.tile rect,
+.concentration-point,
 .customer-point {
     transition: opacity .25s;
 }
 
 .bar.dimmed,
-.tile.dimmed rect {
+.concentration-point.dimmed {
     opacity: .3;
 }
 
 .bar.hovered,
-.tile.hovered rect,
+.concentration-point.hovered,
 .bar.selected,
-.tile.selected rect {
+.concentration-point.selected {
     stroke: #25332f;
     stroke-width: 2.5;
     opacity: 1;
