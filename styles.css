@@ -158,13 +158,6 @@ svg {
     stroke-width: 2;
 }
 
-.bar {
-    fill: #087f68;
-}
-
-.bar:hover {
-    fill: #d35e43;
-}
 
 .tile-label {
     fill: white;
@@ -188,6 +181,118 @@ svg {
 .p90-label {
     fill: #25332f;
     font-size: 12px;
+}
+
+/* ---------- Interacción: tooltip, selección cruzada y resaltados ---------- */
+
+.tooltip {
+    position: fixed;
+    z-index: 10;
+    max-width: 300px;
+    padding: 8px 10px;
+    color: white;
+    background: #25332f;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+    pointer-events: none;          /* el tooltip no debe interceptar el ratón */
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+.tooltip.visible {
+    opacity: .96;
+}
+
+.tooltip strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.tooltip-row span {
+    color: #c5d0ca;
+}
+
+.selection {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 34px;
+    font-size: 14px;
+}
+
+.selection .hint {
+    color: #596762;
+}
+
+.selection button {
+    padding: 4px 10px;
+    font: inherit;
+    cursor: pointer;
+    border-radius: 14px;
+}
+
+.selection .chip {
+    color: white;
+    background: #087f68;
+    border: 1px solid #087f68;
+}
+
+.selection .clear {
+    color: #25332f;
+    background: white;
+    border: 1px solid #cbd4ce;
+}
+
+.point,
+.bar,
+.tile {
+    cursor: pointer;
+}
+
+.line.filtered {
+    stroke: #d35e43;               /* la línea cambia de color si muestra un solo producto */
+}
+
+.point.selected {
+    fill: #25332f;
+}
+
+.bar,
+.tile rect,
+.customer-point {
+    transition: opacity .25s;
+}
+
+.bar.dimmed,
+.tile.dimmed rect {
+    opacity: .3;
+}
+
+.bar.hovered,
+.tile.hovered rect,
+.bar.selected,
+.tile.selected rect {
+    stroke: #25332f;
+    stroke-width: 2.5;
+    opacity: 1;
+}
+
+.customer-point.dimmed {
+    opacity: .08;
+}
+
+.customer-point:hover {
+    stroke: #25332f;
+    stroke-width: 1.5;
+    opacity: 1;
 }
 
 @media (max-width: 600px) {
