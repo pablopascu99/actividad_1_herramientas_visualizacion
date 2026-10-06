@@ -3,7 +3,7 @@
  *
  * Equipo (COMPLETAR con nombre y apellidos de todos los miembros):
  *   - Nombre Apellido1 Apellido2
- *   - Nombre Apellido1 Apellido2
+ *   - Maider Uria Almena
  *   - Aitor Hernández Moreno
  *   - Miguel España Sanchez
  *
@@ -226,7 +226,7 @@ d3.csv("datos/transacciones_limpias.csv", row => ({
     box.html("");
     if (!state.month && !state.stock) {
       box.append("span").attr("class", "hint")
-        .text("Haz clic en un mes de la línea o en un producto para filtrar el resto de gráficas.");
+        .text("En cada una de los gráficos se puede clicar sobre uno de los productos o mes (en el primer gráfico) para filtrar el resto de gráficos por ese producto, y ver su comportamiento.");
       return;
     }
     box.append("span").text("Selección activa:");
@@ -327,8 +327,8 @@ d3.csv("datos/transacciones_limpias.csv", row => ({
       const scope = state.stock ? "Producto " + state.stock + " · " : "";
       d3.select("#sales-findings").text(totalRevenue === 0
         ? scope + "Sin ventas en el período seleccionado."
-        : scope + "Facturación bruta del período: " + money.format(totalRevenue) + ". Mínimo: " +
-          monthName(low.month) + " (" + money.format(low.revenue) + "); máximo: " +
+        : scope + "Facturación bruta del período es de " + money.format(totalRevenue) + ". La facturación mínima se da el " +
+          monthName(low.month) + " (" + money.format(low.revenue) + "); y la máxima el " +
           monthName(peak.month) + " (" + money.format(peak.revenue) + ").");
     }
 
@@ -880,11 +880,11 @@ const concentrationView = (() => {
       if (buyers) circles.filter(customer => buyers.has(customer.customer)).raise();
 
       findings.text(
-        wholeNumber.format(customers.length) + " clientes identificados; " + wholeNumber.format(recurring.length) +
-        " (" + (100 * recurring.length / customers.length).toFixed(1) + " %) repitieron compra en el período. El umbral P90 es " +
-        money.format(threshold) + "; el grupo que lo supera reúne " +
+        "Se identifican " + wholeNumber.format(customers.length) + " clientes; de los cuales " + wholeNumber.format(recurring.length) +
+        " (" + (100 * recurring.length / customers.length).toFixed(1) + " %) de ellos repitieron compra en el período. El umbral P90 es " +
+        money.format(threshold) + "; y el grupo que lo supera reúne el " +
         (100 * d3.sum(highValue, customer => customer.spend) / customerSpend).toFixed(1) +
-        " % del gasto identificado. El gasto es bruto, no beneficio ni valor futuro." +
+        " % del gasto identificado. (Nota: El gasto representado es bruto, no es el beneficio ni el valor futuro.)" +
         (buyers ? " Resaltados: " + wholeNumber.format(buyers.size) + " clientes (" +
           (100 * buyers.size / customers.length).toFixed(1) + " %) que compraron la ref. " + state.stock + "." : "")
       );
@@ -944,7 +944,7 @@ customersView.update(
     );
     d3.select("#product-findings").text(
       (state.month ? monthName(state.month) + " · " : "") +
-      "Ventas brutas, sin descontar devoluciones. Mayor facturación: " + revenueLeader.stock + " · " +
+      "eSe muestran las Ventas brutas, sin descontar devoluciones. La mayor facturación la realiza: " + revenueLeader.stock + " · " +
       revenueLeader.description + " (" + money.format(revenueLeader.revenue) + "). Más unidades: " +
       unitsLeader.stock + " · " + unitsLeader.description + " (" + wholeNumber.format(unitsLeader.units) + ")." +
       (exceptionalSale ? " La ref. 23166 incluye una venta y devolución coincidentes de 74.215 unidades el 18/01/2011." : "")
