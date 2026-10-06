@@ -12,18 +12,18 @@
  *
  * Preguntas de negocio que respondemos en el dashboard:
  *   1. ¿Cómo evolucionan las ventas mes a mes?            -> gráfico de líneas
- *   2. ¿Qué productos concentran más ventas?              -> barras Top 10 + treemap
+ *  2. ¿Qué productos concentran más ventas? -> barras Top 10 + curva de concentración
  *   3. ¿Cómo se relacionan frecuencia, gasto y recencia?  -> scatter de clientes
  *
  * Interacción:
  *   - Filtros Desde/Hasta: acotan el período de TODAS las gráficas.
  *   - Clic en un punto de la línea: selecciona ese mes; productos y clientes
  *     pasan a calcularse solo con ese mes.
- *   - Clic en una barra o en un bloque del treemap: selecciona ese producto;
+ *   Clic en una barra o en un punto de la curva de concentración
  *     la línea muestra solo sus ventas y el scatter resalta a sus compradores.
  *   - Un segundo clic sobre el mismo elemento (o el botón "Limpiar selección")
  *     deshace la selección.
- *   - Tooltip propio en las cuatro gráficas y resaltado enlazado barras <-> treemap.
+ *   - Tooltip propio en las cuatro gráficas y resaltado enlazado barras <-> curva de concentración
  *
  * Patrón de código: cada gráfica crea su SVG UNA sola vez (estructura fija) y en
  * cada render solo actualiza los datos con el patrón enter/update/exit de D3
@@ -213,10 +213,11 @@ d3.csv("datos/transacciones_limpias.csv", row => ({
     hideTooltip();
     render();
   }
-
-  /** Resaltado enlazado al pasar el cursor: marca barra y bloque del mismo producto. */
+  /**  */
   function hoverStock(stock, active) {
-    d3.selectAll(".bar, .tile").filter(d => (d.data || d).stock === stock).classed("hovered", active);
+    d3.selectAll(".bar, .concentration-point")
+      .filter(d => d.stock === stock)
+      .classed("hovered", active);
   }
 
   /** Pinta los avisos ("chips") con la selección activa y el botón de limpiar. */
@@ -396,63 +397,392 @@ d3.csv("datos/transacciones_limpias.csv", row => ({
     return { update };
   })();
 
-  /* -------------------------------------------------------------------------
-   * 9. Gráfica 2b · Treemap de los mismos 10 productos (peso relativo)
-   * ----------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------
+ * 9. Gráfica 2b · Curva de concentración acumulada del Top 10
+ *
+ * Esta visualización complementa el ranking de barras:
+ *   - Cada punto representa uno de los diez productos principales.
+ *   - El eje vertical muestra el porcentaje acumulado sobre el total.
+ *   - El último punto indica qué porcentaje reúne el Top 10 completo.
+ *   - Los puntos permiten seleccionar productos y filtrar otras gráficas.
+ * ----------------------------------------------------------------------- */
+const concentrationView = (() => {
+  /*
+   * Se utiliza un ancho menor que WIDTH porque esta gráfica aparece
+   * en la columna derecha de la cuadrícula.
+   */
+  const chartWidth = 640;
+  const height = 350;
 
-  const treemapView = (() => {
-    const mapHeight = 350;
-    const svg = d3.select("#treemap-chart").append("svg").attr("viewBox", `0 0 ${WIDTH} ${mapHeight}`)
-      .attr("role", "img").attr("aria-label", "Treemap con el peso de los diez productos principales");
+  const margins = {
+    top: 28,
+    right: 22,
+    bottom: 70,
+    left: 64
+  };
 
-    function update(topProducts) {
-      const metric = productMetricInput.value;
-      const total = d3.sum(topProducts, row => row[metric]);
+  const plotWidth = chartWidth - margins.left - margins.right;
+  const plotHeight = height - margins.top - margins.bottom;
 
-      // d3.hierarchy + d3.treemap calculan el rectángulo (x0, y0, x1, y1) de cada producto.
-      const root = d3.hierarchy({ children: topProducts }).sum(row => row[metric]).sort((a, b) => b.value - a.value);
-      d3.treemap().size([WIDTH, mapHeight]).paddingInner(3)(root);
+  /*
+   * Formato español para los porcentajes.
+   * Ejemplo: 0.253 se muestra como 25,3 %.
+   */
+  const percent = new Intl.NumberFormat("es-ES", {
+    style: "percent",
+    maximumFractionDigits: 1
+  });
 
-      // Cada bloque es un <g> con su <rect> y su <text>; clave = referencia.
-      const tiles = svg.selectAll("g.tile").data(root.leaves(), tile => tile.data.stock)
-        .join(
-          enter => {
-            const group = enter.append("g").attr("class", "tile")
-              .attr("transform", tile => `translate(${tile.x0},${tile.y0})`).style("opacity", 0);
-            group.append("rect").attr("width", tile => tile.x1 - tile.x0).attr("height", tile => tile.y1 - tile.y0);
-            group.append("text").attr("class", "tile-label").attr("x", 6).attr("y", 18);
-            return group;
-          },
-          update => update,
-          exit => exit.transition().duration(DURATION / 2).style("opacity", 0).remove()
+  /* SVG principal. */
+  const svg = d3.select("#concentration-chart")
+    .append("svg")
+    .attr("viewBox", `0 0 ${chartWidth} ${height}`)
+    .attr("role", "img")
+    .attr(
+      "aria-label",
+      "Curva de concentración acumulada de los diez productos principales"
+    );
+
+  /* Grupo que contiene la zona de dibujo. */
+  const plot = svg.append("g")
+    .attr(
+      "transform",
+      `translate(${margins.left},${margins.top})`
+    );
+
+  /* Elementos fijos de la gráfica. */
+  const grid = plot.append("g")
+    .attr("class", "grid");
+
+  const axisY = plot.append("g")
+    .attr("class", "axis");
+
+  const axisX = plot.append("g")
+    .attr("class", "axis")
+    .attr(
+      "transform",
+      `translate(0,${plotHeight})`
+    );
+
+  /* Título del eje vertical. */
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr(
+      "transform",
+      `translate(16,${height / 2}) rotate(-90)`
+    )
+    .attr("text-anchor", "middle")
+    .text("Porcentaje acumulado del total");
+
+  /*
+   * Área sombreada bajo la curva.
+   * La línea y los puntos se crean una sola vez y después se actualizan.
+   */
+  const areaPath = plot.append("path")
+    .attr("class", "concentration-area");
+
+  const linePath = plot.append("path")
+    .attr("class", "concentration-line");
+
+  const points = plot.append("g");
+
+  /*
+   * Etiqueta que se coloca junto al último punto.
+   * Muestra el porcentaje total que reúne el Top 10.
+   */
+  const finalLabel = plot.append("text")
+    .attr("class", "concentration-label")
+    .attr("text-anchor", "end");
+
+  /**
+   * Actualiza la curva de concentración.
+   *
+   * @param {Array} topProducts Diez productos principales ya ordenados.
+   * @param {Array} allProducts Todos los productos del período seleccionado.
+   */
+  function update(topProducts, allProducts) {
+    const metric = productMetricInput.value;
+
+    /*
+     * Total de facturación o unidades de TODOS los productos.
+     * Se utiliza como denominador para calcular la cuota real del Top 10.
+     */
+    const total = d3.sum(
+      allProducts,
+      row => row[metric]
+    );
+
+    /*
+     * Se calcula:
+     *   - share: cuota individual del producto.
+     *   - cumulative: porcentaje acumulado hasta ese producto.
+     */
+    let accumulated = 0;
+
+    const data = topProducts.map((row, index) => {
+      const share = total > 0
+        ? row[metric] / total
+        : 0;
+
+      accumulated += share;
+
+      return {
+        ...row,
+        rank: index + 1,
+        share,
+        cumulative: accumulated
+      };
+    });
+
+    /*
+     * Límite superior dinámico del eje Y.
+     *
+     * Por ejemplo:
+     *   - Si el Top 10 acumula un 34 %, el eje llegará aproximadamente al 40 %.
+     *   - Si acumula un 76 %, llegará aproximadamente al 80 %.
+     */
+    const maxCumulative =
+      d3.max(data, row => row.cumulative) || 0;
+
+    const yMax = Math.min(
+      1,
+      Math.max(
+        0.1,
+        Math.ceil((maxCumulative + 0.02) * 10) / 10
+      )
+    );
+
+    /*
+     * El eje horizontal utiliza las referencias de producto.
+     */
+    const x = d3.scalePoint()
+      .domain(data.map(row => row.stock))
+      .range([0, plotWidth])
+      .padding(0.4);
+
+    /*
+     * El eje vertical representa porcentajes acumulados.
+     */
+    const y = d3.scaleLinear()
+      .domain([0, yMax])
+      .nice()
+      .range([plotHeight, 0]);
+
+    /* Actualización animada de la rejilla. */
+    grid.transition()
+      .duration(DURATION)
+      .call(
+        d3.axisLeft(y)
+          .ticks(5)
+          .tickSize(-plotWidth)
+          .tickFormat("")
+      );
+
+    /* Actualización animada del eje vertical. */
+    axisY.transition()
+      .duration(DURATION)
+      .call(
+        d3.axisLeft(y)
+          .ticks(5)
+          .tickFormat(d3.format(".0%"))
+      );
+
+    /*
+     * Se actualiza el eje horizontal.
+     * Las etiquetas se rotan para evitar que se superpongan.
+     */
+    axisX.call(
+      d3.axisBottom(x)
+        .tickFormat(stock => stock)
+    );
+
+    axisX.selectAll("text")
+      .attr("transform", "rotate(-35)")
+      .attr("text-anchor", "end")
+      .attr("dx", "-.55em")
+      .attr("dy", ".35em");
+
+    /*
+     * Generador de la línea acumulada.
+     * curveMonotoneX suaviza la línea sin modificar el orden de los valores.
+     */
+    const line = d3.line()
+      .x(row => x(row.stock))
+      .y(row => y(row.cumulative))
+      .curve(d3.curveMonotoneX);
+
+    /* Generador del área sombreada. */
+    const area = d3.area()
+      .x(row => x(row.stock))
+      .y0(plotHeight)
+      .y1(row => y(row.cumulative))
+      .curve(d3.curveMonotoneX);
+
+    /* Actualización animada del área. */
+    areaPath.datum(data)
+      .transition()
+      .duration(DURATION)
+      .attr(
+        "d",
+        data.length ? area : null
+      );
+
+    /* Actualización animada de la línea. */
+    linePath.datum(data)
+      .transition()
+      .duration(DURATION)
+      .attr(
+        "d",
+        data.length ? line : null
+      );
+
+    /*
+     * Puntos de producto.
+     * La referencia del producto se utiliza como clave del join.
+     */
+    const circles = points.selectAll("circle")
+      .data(
+        data,
+        row => row.stock
+      )
+      .join(
+        /*
+         * Los productos nuevos aparecen desde la parte inferior.
+         */
+        enter => enter.append("circle")
+          .attr("class", "concentration-point")
+          .attr("cx", row => x(row.stock))
+          .attr("cy", plotHeight)
+          .attr("r", 0),
+
+        /*
+         * Los productos que ya existían mantienen su elemento SVG.
+         */
+        update => update,
+
+        /*
+         * Los productos que salen del Top 10 desaparecen suavemente.
+         */
+        exit => exit.transition()
+          .duration(DURATION / 2)
+          .attr("r", 0)
+          .remove()
+      )
+      /*
+       * Se conserva el mismo color que en la barra correspondiente.
+       */
+      .attr(
+        "fill",
+        row => productColor(row.stock)
+      )
+      .classed(
+        "selected",
+        row => row.stock === state.stock
+      )
+      .classed(
+        "dimmed",
+        row => state.stock && row.stock !== state.stock
+      )
+      /*
+       * Tooltip y resaltado cruzado.
+       */
+      .on("mouseenter", (event, row) => {
+        hoverStock(row.stock, true);
+
+        showTooltip(
+          event,
+          row.stock + " · " + row.description,
+          [
+            [
+              "Facturación",
+              money.format(row.revenue)
+            ],
+            [
+              "Unidades",
+              wholeNumber.format(row.units)
+            ],
+            [
+              "Cuota individual",
+              percent.format(row.share)
+            ],
+            [
+              "Acumulado hasta aquí",
+              percent.format(row.cumulative)
+            ],
+            [
+              "",
+              row.stock === state.stock
+                ? "Clic para quitar el filtro"
+                : "Clic para filtrar por este producto"
+            ]
+          ]
+        );
+      })
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", (event, row) => {
+        hoverStock(row.stock, false);
+        hideTooltip();
+      })
+      /*
+       * Selección cruzada: el producto elegido actualiza la línea
+       * y resalta a los clientes compradores.
+       */
+      .on("click", (event, row) => {
+        toggleStock(row.stock);
+      });
+
+    /*
+     * Los puntos se desplazan hacia su nueva posición cuando cambia:
+     *   - El período.
+     *   - La métrica.
+     *   - El mes seleccionado.
+     */
+    circles.transition()
+      .duration(DURATION)
+      .attr(
+        "cx",
+        row => x(row.stock)
+      )
+      .attr(
+        "cy",
+        row => y(row.cumulative)
+      )
+      .attr(
+        "r",
+        row => row.stock === state.stock ? 8 : 6
+      );
+
+    /*
+     * Etiqueta situada junto al último producto.
+     */
+    if (data.length) {
+      const last = data[data.length - 1];
+
+      finalLabel
+        .text(
+          "Top 10: " +
+          percent.format(last.cumulative)
         )
-        .classed("selected", tile => tile.data.stock === state.stock)
-        .classed("dimmed", tile => state.stock && tile.data.stock !== state.stock)
-        .on("mouseenter", (event, tile) => {
-          hoverStock(tile.data.stock, true);
-          showTooltip(event, tile.data.stock + " · " + tile.data.description, [
-            ["Facturación", money.format(tile.data.revenue)],
-            ["Unidades", wholeNumber.format(tile.data.units)],
-            ["Peso en el Top 10", (100 * tile.data[metric] / total).toFixed(1) + " %"]
-          ]);
-        })
-        .on("mousemove", moveTooltip)
-        .on("mouseleave", (event, tile) => { hoverStock(tile.data.stock, false); hideTooltip(); })
-        .on("click", (event, tile) => toggleStock(tile.data.stock));
-
-      // Los bloques se deslizan y cambian de tamaño hasta su nueva posición.
-      tiles.transition().duration(DURATION)
-        .attr("transform", tile => `translate(${tile.x0},${tile.y0})`).style("opacity", null);
-      tiles.select("rect").attr("fill", tile => productColor(tile.data.stock))
-        .transition().duration(DURATION)
-        .attr("width", tile => tile.x1 - tile.x0).attr("height", tile => tile.y1 - tile.y0);
-      // La etiqueta solo se muestra si cabe en el bloque.
-      tiles.select("text")
-        .text(tile => (tile.x1 - tile.x0 > 52 && tile.y1 - tile.y0 > 22) ? tile.data.stock : "");
+        .transition()
+        .duration(DURATION)
+        .attr(
+          "x",
+          x(last.stock) - 5
+        )
+        .attr(
+          "y",
+          Math.max(
+            14,
+            y(last.cumulative) - 12
+          )
+        );
+    } else {
+      finalLabel.text("");
     }
+  }
 
-    return { update };
-  })();
+  return { update };
+})();
 
   /* -------------------------------------------------------------------------
    * 10. Gráfica 3 · Scatter de clientes (pedidos × gasto, color = recencia)
@@ -583,9 +913,20 @@ d3.csv("datos/transacciones_limpias.csv", row => ({
       : null;
 
     salesView.update(monthlyTotals(lineSales, monthsInRange()));
-    productsView.update(topProducts);
-    treemapView.update(topProducts);
-    customersView.update(customerTotals(periodSales), state.month || monthInputTo.value, buyers);
+productsView.update(topProducts);
+
+/*
+ * La curva necesita:
+ *   - Los diez productos principales.
+ *   - Todos los productos, para calcular el porcentaje sobre el total real.
+ */
+concentrationView.update(topProducts, products);
+
+customersView.update(
+  customerTotals(periodSales),
+  state.month || monthInputTo.value,
+  buyers
+);
     drawProductFindings(products, periodSales);
     drawSelection();
   }
