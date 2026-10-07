@@ -2,7 +2,7 @@
  * ============================================================================
  *
  * Equipo (COMPLETAR con nombre y apellidos de todos los miembros):
- *   - Nombre Apellido1 Apellido2
+ *   - Pablo Pascual Garcia
  *   - Maider Uria Almena
  *   - Aitor Hernández Moreno
  *   - Miguel España Sanchez
